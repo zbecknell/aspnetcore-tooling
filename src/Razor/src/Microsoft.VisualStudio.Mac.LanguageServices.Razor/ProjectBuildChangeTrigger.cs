@@ -3,6 +3,7 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Linq;
 using Microsoft.CodeAnalysis.Razor;
 using Microsoft.CodeAnalysis.Razor.ProjectSystem;
 using Microsoft.VisualStudio.Editor.Razor;
@@ -15,11 +16,15 @@ namespace Microsoft.VisualStudio.Mac.LanguageServices.Razor
     internal class ProjectBuildChangeTrigger : ProjectSnapshotChangeTrigger
     {
         private readonly TextBufferProjectService _projectService;
+        private readonly ProjectWorkspaceStateGenerator _workspaceStateGenerator;
         private readonly ForegroundDispatcher _foregroundDispatcher;
         private ProjectSnapshotManagerBase _projectManager;
 
         [ImportingConstructor]
-        public ProjectBuildChangeTrigger(ForegroundDispatcher foregroundDispatcher, TextBufferProjectService projectService)
+        public ProjectBuildChangeTrigger(
+            ForegroundDispatcher foregroundDispatcher, 
+            TextBufferProjectService projectService,
+            ProjectWorkspaceStateGenerator workspaceStateGenerator)
         {
             if (foregroundDispatcher == null)
             {
@@ -31,8 +36,14 @@ namespace Microsoft.VisualStudio.Mac.LanguageServices.Razor
                 throw new ArgumentNullException(nameof(projectService));
             }
 
+            if (workspaceStateGenerator == null)
+            {
+                throw new ArgumentNullException(nameof(workspaceStateGenerator));
+            }
+
             _foregroundDispatcher = foregroundDispatcher;
             _projectService = projectService;
+            _workspaceStateGenerator = workspaceStateGenerator;
         }
 
         // Internal for testing
@@ -97,15 +108,16 @@ namespace Microsoft.VisualStudio.Mac.LanguageServices.Razor
             }
 
             var projectPath = _projectService.GetProjectPath(projectItem);
-            var project = _projectManager.GetLoadedProject(projectPath);
-            if (project != null && project.WorkspaceProject != null)
+            var projectSnapshot = _projectManager.GetLoadedProject(projectPath);
+            if (projectSnapshot != null)
             {
-                var workspaceProject = _projectManager.Workspace.CurrentSolution.GetProject(project.WorkspaceProject.Id);
+                var workspaceProject = _projectManager.Workspace.CurrentSolution?.Projects.FirstOrDefault(
+                    project => FilePathComparer.Instance.Equals(project.FilePath, projectSnapshot.FilePath));
                 if (workspaceProject != null)
                 {
                     // Trigger a tag helper update by forcing the project manager to see the workspace Project
                     // from the current solution.
-                    _projectManager.WorkspaceProjectChanged(workspaceProject);
+                    _workspaceStateGenerator.UpdateWorkspaceState(workspaceProject, projectSnapshot);
                 }
             }
         }
