@@ -17,7 +17,7 @@ namespace Microsoft.CodeAnalysis.Razor
 
         public IList<TagHelperDescriptor> TagHelpers { get; set; } = new List<TagHelperDescriptor>();
 
-        public override Task<TagHelperResolutionResult> GetTagHelpersAsync(ProjectSnapshot project, CancellationToken cancellationToken = default)
+        public override Task<TagHelperResolutionResult> GetTagHelpersAsync(Project workspaceProject, ProjectSnapshot projectSnapshot, CancellationToken cancellationToken = default)
         {
             if (CompletionSource == null)
             {

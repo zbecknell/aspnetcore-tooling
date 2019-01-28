@@ -152,6 +152,13 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
 
         public RazorProjectEngine ProjectEngine => ComputedState.ProjectEngine;
 
+        /// <summary>
+        /// Gets the version of this project based on the computed state, NOT INCLUDING content
+        /// changes. The computed state is guaranteed to change when the configuration or tag helpers
+        /// change.
+        /// </summary>
+        public VersionStamp ComputedStateVersion => ComputedState.ProjectStateVersion;
+
         private ComputedStateTracker ComputedState
         {
             get
@@ -169,18 +176,6 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
 
                 return _computedState;
             }
-        }
-
-        /// <summary>
-        /// Gets the version of this project based on the computed state, NOT INCLUDING content
-        /// changes. The computed state is guaranteed to change when the configuration or tag helpers
-        /// change.
-        /// </summary>
-        /// <returns>Asynchronously returns the computed version.</returns>
-        public VersionStamp GetComputedStateVersion()
-        {
-            var version = ComputedState.ProjectStateVersion;
-            return version;
         }
 
         public ProjectState WithAddedHostDocument(HostDocument hostDocument, Func<Task<TextAndVersion>> loader)
@@ -337,7 +332,7 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
         {
             var difference = ProjectDifference.ProjectWorkspaceStateChanged;
 
-            var documents = Documents.ToImmutableDictionary(kvp => kvp.Key, kvp => kvp.Value.WithChangedProjectWorkspaceState(), FilePathComparer.Instance);
+            var documents = Documents.ToImmutableDictionary(kvp => kvp.Key, kvp => kvp.Value.WithProjectWorkspaceStateChange(), FilePathComparer.Instance);
             var state = new ProjectState(this, difference, HostProject, projectWorkspaceState, documents, ImportsToRelatedDocuments);
             return state;
         }

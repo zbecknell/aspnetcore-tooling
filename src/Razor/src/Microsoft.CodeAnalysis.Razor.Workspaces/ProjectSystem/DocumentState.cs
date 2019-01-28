@@ -195,7 +195,7 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
             return state;
         }
 
-        public virtual DocumentState WithChangedProjectWorkspaceState()
+        public virtual DocumentState WithProjectWorkspaceStateChange()
         {
             var state = new DocumentState(Services, HostDocument, _sourceText, _version, _loader);
 
@@ -323,7 +323,7 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
                 // - This document
                 //
                 // All of these things are cached, so no work is wasted if we do need to generate the code.
-                var computedStateVersion = project.State.GetComputedStateVersion();
+                var computedStateVersion = project.State.ComputedStateVersion;
                 var documentCollectionVersion = project.State.DocumentCollectionVersion;
                 var imports = await GetImportsAsync(project, document).ConfigureAwait(false);
                 var documentVersion = await document.GetTextVersionAsync().ConfigureAwait(false);
