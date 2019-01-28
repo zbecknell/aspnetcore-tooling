@@ -85,7 +85,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Razor
             var textBuffer = Mock.Of<ITextBuffer>();
 
             // Act
-            var result = workspaceAccessor.TryGetWorkspaceFromLiveShare(textBuffer, out var workspace);
+            var result = workspaceAccessor.TryGetWorkspaceFromRazorBuffer(textBuffer, out var workspace);
 
             // Assert
             Assert.False(result);
@@ -103,7 +103,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Razor
             var textBuffer = Mock.Of<ITextBuffer>();
 
             // Act
-            var result = workspaceAccessor.TryGetWorkspaceFromLiveShare(textBuffer, out var workspace);
+            var result = workspaceAccessor.TryGetWorkspaceFromRazorBuffer(textBuffer, out var workspace);
 
             // Assert
             Assert.False(result);
@@ -121,7 +121,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Razor
             var textBuffer = Mock.Of<ITextBuffer>();
 
             // Act
-            var result = workspaceAccessor.TryGetWorkspaceFromLiveShare(textBuffer, out var workspace);
+            var result = workspaceAccessor.TryGetWorkspaceFromRazorBuffer(textBuffer, out var workspace);
 
             // Assert
             Assert.True(result);
