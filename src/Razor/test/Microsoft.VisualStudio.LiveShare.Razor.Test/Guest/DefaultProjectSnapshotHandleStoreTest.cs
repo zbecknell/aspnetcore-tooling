@@ -26,7 +26,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         public void GetProjectHandles_ReturnsCurrentProjects()
         {
             // Arrange
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
             snapshotStore.UpdateProjects(
                 new ProjectSnapshotManagerProxyState(new[]
                 {
@@ -45,7 +45,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         public void GetProjectHandles_ReturnsEmptyArrayIfNotInitialized()
         {
             // Arrange
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
 
             // Act
             var projects = snapshotStore.GetProjectHandles();
@@ -61,7 +61,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
             var expectedChangeEventArgs = new ProjectProxyChangeEventArgs(new Uri("vsls:/some/path/project.csproj"), ProjectProxyChangeKind.ProjectChanged);
             var expectedProjectManagerState = new ProjectSnapshotManagerProxyState(new[] { TestProjectSnapshotHandleProxy.Create(new Uri("vsls:/some/path/project.csproj")) });
             var setupArgs = new ProjectManagerProxyChangeEventArgs(expectedChangeEventArgs, expectedProjectManagerState);
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
             var called = false;
             snapshotStore.Changed += (sender, args) =>
             {
@@ -82,14 +82,14 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         {
             // Arrange
             var proxy = new Mock<IProjectSnapshotManagerProxy>();
-            proxy.Setup(p => p.GetStateAsync(CancellationToken.None))
+            proxy.Setup(p => p.GetProjectManagerStateAsync(CancellationToken.None))
                 .Returns(Task.FromResult(new ProjectSnapshotManagerProxyState(new[]
                 {
                     TestProjectSnapshotHandleProxy.Create(new Uri("vsls:/some/path/project.csproj")),
                     TestProjectSnapshotHandleProxy.Create(new Uri("vsls:/some/other/project.csproj")),
                 })));
             var accessor = Mock.Of<ProxyAccessor>(a => a.GetProjectSnapshotManagerProxy() == proxy.Object);
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, accessor);
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, accessor);
             snapshotStore.GetProjectHandles();
             var calledWith = new List<ProjectProxyChangeEventArgs>();
             snapshotStore.Changed += (sender, args) => calledWith.Add(args);
@@ -117,10 +117,10 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         {
             // Arrange
             var proxy = new Mock<IProjectSnapshotManagerProxy>();
-            proxy.Setup(p => p.GetStateAsync(CancellationToken.None))
+            proxy.Setup(p => p.GetProjectManagerStateAsync(CancellationToken.None))
                 .Returns(Task.FromResult(new ProjectSnapshotManagerProxyState(new[] { TestProjectSnapshotHandleProxy.Create(new Uri("vsls:/some/path/project.csproj")) })));
             var accessor = Mock.Of<ProxyAccessor>(a => a.GetProjectSnapshotManagerProxy() == proxy.Object);
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, accessor);
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, accessor);
             snapshotStore.Changed += (sender, args) => throw new InvalidOperationException("This should not be called.");
 
             // Act
@@ -136,10 +136,10 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         {
             // Arrange
             var proxy = new Mock<IProjectSnapshotManagerProxy>();
-            proxy.Setup(p => p.GetStateAsync(CancellationToken.None))
+            proxy.Setup(p => p.GetProjectManagerStateAsync(CancellationToken.None))
                 .Returns(Task.FromResult(new ProjectSnapshotManagerProxyState(Array.Empty<ProjectSnapshotHandleProxy>())));
             var accessor = Mock.Of<ProxyAccessor>(a => a.GetProjectSnapshotManagerProxy() == proxy.Object);
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, accessor);
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, accessor);
 
             // Initialize the initial project state to a project list. This is pretending to be an update event from the proxy
             // that has newer information than initialization.
@@ -157,7 +157,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
         public void UpdateProjects_UpdatesProjectCollection()
         {
             // Arrange
-            var snapshotStore = new DefaultProjectSnapshotHandleStore(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
+            var snapshotStore = new DefaultProjectSnapshotSynchronizationService(Dispatcher, JoinableTaskFactory, Mock.Of<ProxyAccessor>());
             var expectedProject = TestProjectSnapshotHandleProxy.Create(new Uri("vsls:/some/path/project.csproj"));
             var remoteProjectSnapshotManagerState = new ProjectSnapshotManagerProxyState(new List<ProjectSnapshotHandleProxy>() { expectedProject });
 

@@ -151,7 +151,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Host
                 JoinableTaskFactory);
 
             // Act
-            var state = await JoinableTaskFactory.RunAsync(() => proxy.GetStateAsync(CancellationToken.None));
+            var state = await JoinableTaskFactory.RunAsync(() => proxy.GetProjectManagerStateAsync(CancellationToken.None));
 
             // Assert
             Assert.Collection(
@@ -183,8 +183,8 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Host
                 JoinableTaskFactory);
 
             // Act
-            var state1 = await JoinableTaskFactory.RunAsync(() => proxy.GetStateAsync(CancellationToken.None));
-            var state2 = await JoinableTaskFactory.RunAsync(() => proxy.GetStateAsync(CancellationToken.None));
+            var state1 = await JoinableTaskFactory.RunAsync(() => proxy.GetProjectManagerStateAsync(CancellationToken.None));
+            var state2 = await JoinableTaskFactory.RunAsync(() => proxy.GetProjectManagerStateAsync(CancellationToken.None));
 
             // Assert
             Assert.Same(state1, state2);

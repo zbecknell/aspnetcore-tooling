@@ -26,4 +26,4 @@ IF "%sln%"=="" (
     exit /b 1
 )
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\OfficialPreview\Common7\IDE\devenv.exe" %sln%
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\PublicPreview\Common7\IDE\devenv.exe" %sln%

@@ -125,19 +125,19 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
             Assert.NotEqual(snapshotManager.Projects.Count, initialProjects.Count);
         }
 
-        private static ProjectSnapshotHandleStore CreateSnapshotStore(params ProjectSnapshotHandleProxy[] snapshotProxies)
+        private static ProjectSnapshotSynchronizationService CreateSnapshotStore(params ProjectSnapshotHandleProxy[] snapshotProxies)
         {
             var snapshotStore = new TestSnapshotStore();
             snapshotStore.ProjectHandles.AddRange(snapshotProxies);
             return snapshotStore;
         }
 
-        private GuestProjectSnapshotManager CreateSnapshotManager(ProjectSnapshotHandleStore projectSnapshotHandleStore, Workspace workspace)
+        private GuestProjectSnapshotManager CreateSnapshotManager(ProjectSnapshotSynchronizationService projectSnapshotHandleStore, Workspace workspace)
         {
             return new TestProjectSnapshotManager(Dispatcher, workspace.Services, projectSnapshotHandleStore, workspace);
         }
 
-        private class TestSnapshotStore : ProjectSnapshotHandleStore
+        private class TestSnapshotStore : ProjectSnapshotSynchronizationService
         {
             public override event EventHandler<ProjectProxyChangeEventArgs> Changed
             {
@@ -152,7 +152,7 @@ namespace Microsoft.VisualStudio.LiveShare.Razor.Guest
 
         private class TestProjectSnapshotManager : GuestProjectSnapshotManager
         {
-            internal TestProjectSnapshotManager(ForegroundDispatcher foregroundDispatcher, HostWorkspaceServices services, ProjectSnapshotHandleStore projectSnapshotHandleStore, Workspace workspace)
+            internal TestProjectSnapshotManager(ForegroundDispatcher foregroundDispatcher, HostWorkspaceServices services, ProjectSnapshotSynchronizationService projectSnapshotHandleStore, Workspace workspace)
                 : base(foregroundDispatcher, services, projectSnapshotHandleStore, new TestProjectSnapshotFactory(), workspace)
             {
             }

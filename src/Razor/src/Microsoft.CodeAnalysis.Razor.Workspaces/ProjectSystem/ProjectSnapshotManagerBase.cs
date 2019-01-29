@@ -27,7 +27,7 @@ namespace Microsoft.CodeAnalysis.Razor.ProjectSystem
 
         public abstract void ProjectConfigurationChanged(HostProject hostProject);
 
-        public abstract void ProjectWorkspaceStateChanged(string projectFilePath, ProjectWorkspaceState workspaceProjectState);
+        public abstract void ProjectWorkspaceStateChanged(string projectFilePath, ProjectWorkspaceState projectWorkspaceState);
 
         public abstract void ProjectRemoved(HostProject hostProject);
 
