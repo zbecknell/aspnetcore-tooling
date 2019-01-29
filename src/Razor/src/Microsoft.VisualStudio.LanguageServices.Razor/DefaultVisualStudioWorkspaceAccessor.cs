@@ -87,7 +87,12 @@ namespace Microsoft.VisualStudio.LanguageServices.Razor
         internal bool TryGetWorkspaceFromRazorBuffer(ITextBuffer textBuffer, out Workspace workspace)
         {
             workspace = textBuffer.GetWorkspace();
-            return workspace == null;
+            if (workspace == null)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         // Internal virtual for testing

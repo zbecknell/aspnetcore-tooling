@@ -13,7 +13,7 @@ namespace Microsoft.VisualStudio.Editor.Razor
 
         public DefaultProjectPathProvider(
             TextBufferProjectService projectService,
-            [Import(typeof(LiveShareProjectPathProvider))] LiveShareProjectPathProvider liveShareProjectPathProvider)
+            LiveShareProjectPathProvider liveShareProjectPathProvider)
         {
             if (projectService == null)
             {
