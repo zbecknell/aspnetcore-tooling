@@ -141,3 +141,6 @@ out/
 
 # Test generated
 src/Razor/test/OutOfWorkspaceFile.razor
+
+# yarn
+yarn-error.log

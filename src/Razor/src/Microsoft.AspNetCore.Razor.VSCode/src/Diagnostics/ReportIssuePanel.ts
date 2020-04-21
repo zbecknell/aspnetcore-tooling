@@ -1,7 +1,7 @@
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+ * -------------------------------------------------------------------------------------------- */
 
 import * as vscode from 'vscode';
 import { Trace } from 'vscode-jsonrpc';
@@ -24,7 +24,7 @@ export class ReportIssuePanel {
         private readonly logger: RazorLogger) {
     }
 
-    public async show() {
+    public async show(): Promise<void> {
         if (this.panel) {
             this.panel.reveal(vscode.ViewColumn.Two);
         } else {
@@ -42,15 +42,15 @@ export class ReportIssuePanel {
         await this.update();
     }
 
-    public async revive(panel: vscode.WebviewPanel) {
+    public async revive(panel: vscode.WebviewPanel): Promise<void> {
         this.panel = panel;
         this.attachToCurrentPanel();
         await this.update();
     }
 
-    private attachToCurrentPanel() {
+    private attachToCurrentPanel(): void {
         if (!this.panel) {
-            vscode.window.showErrorMessage('Unexpected error when attaching to report Razor issue window.');
+            void vscode.window.showErrorMessage('Unexpected error when attaching to report Razor issue window.');
             return;
         }
 
@@ -59,7 +59,7 @@ export class ReportIssuePanel {
                 case 'copyIssue':
                     if (!this.issueContent) {
                         if (!this.dataCollector) {
-                            vscode.window.showErrorMessage('You must first start the data collection before copying.');
+                            void vscode.window.showErrorMessage('You must first start the data collection before copying.');
                             return;
                         }
                         const collectionResult = this.dataCollector.collect();
@@ -68,7 +68,7 @@ export class ReportIssuePanel {
                     }
 
                     await vscode.env.clipboard.writeText(this.issueContent);
-                    vscode.window.showInformationMessage('Razor issue copied to clipboard');
+                    void vscode.window.showInformationMessage('Razor issue copied to clipboard');
                     return;
                 case 'startIssue':
                     if (this.dataCollector) {
@@ -77,15 +77,15 @@ export class ReportIssuePanel {
                     }
                     this.issueContent = undefined;
                     this.dataCollector = this.dataCollectorFactory.create();
-                    vscode.window.showInformationMessage('Razor issue data collection started. Reproduce the issue then press "Stop"');
+                    void vscode.window.showInformationMessage('Razor issue data collection started. Reproduce the issue then press "Stop"');
                     return;
                 case 'stopIssue':
                     if (!this.dataCollector) {
-                        vscode.window.showErrorMessage('You must first start the data collection before stopping.');
+                        void vscode.window.showErrorMessage('You must first start the data collection before stopping.');
                         return;
                     }
                     this.dataCollector.stop();
-                    vscode.window.showInformationMessage('Razor issue data collection stopped. Copying issue content...');
+                    void vscode.window.showInformationMessage('Razor issue data collection stopped. Copying issue content...');
                     return;
             }
         });
@@ -100,9 +100,9 @@ export class ReportIssuePanel {
         });
     }
 
-    private async update() {
+    private update(): Promise<void> {
         if (!this.panel) {
-            return;
+            return Promise.resolve();
         }
 
         let panelBodyContent = '';
@@ -178,5 +178,7 @@ Please set <strong><em>razor.trace</em></strong> to <strong><em>${Trace[Trace.Ve
 ${panelBodyContent}
 </body>
 </html>`;
+
+        return Promise.resolve();
     }
 }

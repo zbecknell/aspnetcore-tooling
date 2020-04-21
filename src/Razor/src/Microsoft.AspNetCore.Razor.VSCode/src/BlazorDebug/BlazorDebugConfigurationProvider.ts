@@ -1,7 +1,7 @@
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+ * -------------------------------------------------------------------------------------------- */
 
 import * as vscode from 'vscode';
 
@@ -45,10 +45,10 @@ export class BlazorDebugConfigurationProvider implements vscode.DebugConfigurati
         return undefined;
     }
 
-    private launchHostedApp(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration) {
+    private launchHostedApp(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration): void {
         if (!configuration.program && !configuration.cwd) {
-            const message = `Must provide 'program' and 'cwd' properties in launch configuration for hosted Blazor WebAssembly apps.`;
-            this.vscodeType.window.showErrorMessage(message);
+            const message = 'Must provide \'program\' and \'cwd\' properties in launch configuration for hosted Blazor WebAssembly apps.';
+            void this.vscodeType.window.showErrorMessage(message);
         }
 
         const app = {
@@ -64,11 +64,11 @@ export class BlazorDebugConfigurationProvider implements vscode.DebugConfigurati
             },
         };
 
-        this.vscodeType.debug.startDebugging(folder, app).then((appStartFulfilled: boolean) => {
+        this.vscodeType.debug.startDebugging(folder, app).then((_appStartFulfilled: boolean) => {
             this.logger.logVerbose('[DEBUGGER] Launching hosted Blazor WebAssembly app...');
             if (process.platform !== 'win32') {
                 const terminate = this.vscodeType.debug.onDidTerminateDebugSession(async event => {
-                    await onDidTerminateDebugSession(event, this.logger, /*targetPid*/undefined, /*hosted*/app.program);
+                    await onDidTerminateDebugSession(event, this.logger, /* targetPid*/undefined, /* hosted*/app.program);
                     terminate.dispose();
                 });
             }
@@ -77,7 +77,7 @@ export class BlazorDebugConfigurationProvider implements vscode.DebugConfigurati
         });
     }
 
-    private launchStandaloneApp(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration) {
+    private launchStandaloneApp(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration): void {
         const shellPath = process.platform === 'win32' ? 'cmd.exe' : 'dotnet';
         const shellArgs = process.platform === 'win32' ? ['/c', 'chcp 65001 >NUL & dotnet run'] : ['run'];
         const spawnOptions = {
@@ -99,10 +99,10 @@ export class BlazorDebugConfigurationProvider implements vscode.DebugConfigurati
             terminate.dispose();
         });
 
-        output.show(/*preserveFocus*/true);
+        output.show(/* preserveFocus*/true);
     }
 
-    private async launchBrowser(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration) {
+    private async launchBrowser(folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration): Promise<void> {
         const browser = {
             name: JS_DEBUG_NAME,
             type: configuration.browser === 'edge' ? 'pwa-msedge' : 'pwa-chrome',
@@ -132,11 +132,11 @@ export class BlazorDebugConfigurationProvider implements vscode.DebugConfigurati
                 '[DEBUGGER] Error when launching browser debugger: ',
                 error,
             );
-            const message = `There was an unexpected error while launching your debugging session. Check the console for helpful logs and visit the debugging docs for more info.`;
-            this.vscodeType.window.showErrorMessage(message, `View Debug Docs`, `Ignore`).then(async result => {
+            const message = 'There was an unexpected error while launching your debugging session. Check the console for helpful logs and visit the debugging docs for more info.';
+            void this.vscodeType.window.showErrorMessage(message, 'View Debug Docs', 'Ignore').then(async result => {
                 if (result === 'View Debug Docs') {
                     const debugDocsUri = 'https://aka.ms/blazorwasmcodedebug';
-                    await this.vscodeType.commands.executeCommand(`vcode.open`, debugDocsUri);
+                    await this.vscodeType.commands.executeCommand('vcode.open', debugDocsUri);
                 }
             });
         }
