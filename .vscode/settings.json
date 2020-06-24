@@ -6,6 +6,7 @@
     "*.targets": "xml",
     "*.tasks": "xml"
   },
+  "eslint.enable": true,
   "eslint.format.enable": true,
   "eslint.workingDirectories": [
     "src/Razor/src/Microsoft.AspNetCore.Razor.VSCode",

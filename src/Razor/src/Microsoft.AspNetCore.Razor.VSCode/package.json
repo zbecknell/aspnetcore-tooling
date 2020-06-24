@@ -26,7 +26,7 @@
     "vscode-languageclient": "5.2.1"
   },
   "eslintConfig": {
-    "extends": "eslint-config-razor-tooling"
+    "extends": "razor-tooling"
   },
   "main": "./dist/extension.js",
   "engines": {
