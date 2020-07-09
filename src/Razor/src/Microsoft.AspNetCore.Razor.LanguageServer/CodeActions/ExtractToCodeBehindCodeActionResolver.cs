@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -144,7 +145,7 @@ namespace Microsoft.AspNetCore.Razor.LanguageServer.CodeActions
             string codeBehindPath;
             do
             {
-                var identifier = n > 0 ? n.ToString() : string.Empty;  // Make it look nice
+                var identifier = n > 0 ? n.ToString(CultureInfo.InvariantCulture) : string.Empty;  // Make it look nice
                 codeBehindPath = Path.Combine(
                     Path.GetDirectoryName(path),
                     $"{Path.GetFileNameWithoutExtension(path)}{identifier}{Path.GetExtension(path)}.cs");
