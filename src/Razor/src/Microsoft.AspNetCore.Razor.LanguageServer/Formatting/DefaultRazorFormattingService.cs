@@ -87,15 +87,77 @@ namespace Microsoft.AspNetCore.Razor.LanguageServer.Formatting
 
         public override Task<TextEdit[]> ApplyFormattedEditsAsync(Uri uri, RazorCodeDocument codeDocument, RazorLanguageKind kind, TextEdit[] formattedEdits, FormattingOptions options)
         {
+            // We have obtained a set of edits to the projected HTML/C# document from the client.
+            // We need to apply those changes to the original Razor document as appropriate.
+
+            if (kind == RazorLanguageKind.Html)
+            {
+                // We don't support formatting HTML edits yet.
+                var edits = RemapTextEdits(codeDocument, formattedEdits);
+                return Task.FromResult(edits);
+            }
+
+            // Create the formatting context for the razor document.
             var span = TextSpan.FromBounds(0, codeDocument.Source.Length);
             var range = span.AsRange(codeDocument.GetSourceText());
             var formattingContext = FormattingContext.Create(uri, codeDocument, range, options);
 
-            // TODO
-            var edits = new List<TextEdit>();
-            for (var i = 0; i < formattedEdits.Length; i++)
+            // Normalize and re-map the C# edits.
+            var csharpText = SourceText.From(codeDocument.GetCSharpDocument().GeneratedCode);
+            var normalizedEdits = NormalizeTextEdits(csharpText, formattedEdits);
+            var mappedEdits = RemapTextEdits(codeDocument, normalizedEdits);
+
+            // Find the lines that were affected by these edits.
+            var originalText = codeDocument.GetSourceText();
+            var changes = mappedEdits.Select(e => e.AsTextChange(originalText));
+            var changedText = originalText.WithChanges(changes);
+            TrackEncompassingChange(originalText, changedText, out var spanBeforeChange, out var spanAfterChange);
+            var rangeBeforeEdit = spanBeforeChange.AsRange(originalText);
+            var rangeAfterEdit = spanAfterChange.AsRange(changedText);
+
+            // Now, for each affected line in the edited version of the document, remove x amount of spaces
+            // at the front to account for extra indentation applied by the C# formatter.
+            // This should be based on context.
+            // For instance, lines inside @code/@functions block should be reduced one level
+            // and lines inside @{} should be reduced by two levels.
+            var indentationEdits = new List<TextEdit>();
+            for (var i = rangeAfterEdit.Start.Line; i <= rangeAfterEdit.End.Line; i++)
             {
-                var projectedRange = formattedEdits[i].Range;
+                var isInClassBody = true; // TODO: This should come from context.
+                var minCSharpIndentationLevel = isInClassBody ? 2 : 3;
+                var minCSharpIndentationLength = formattingContext.GetIndentationLevelString(minCSharpIndentationLevel).Length;
+                var existingWhitespaceLength = changedText.Lines[(int)i].GetFirstNonWhitespaceOffset() ?? 0;
+                if (existingWhitespaceLength < minCSharpIndentationLength)
+                {
+                    // Safeguard so we don't nuke unnecessary characters. We can't nuke more that the available whitespace.
+                    continue;
+                }
+
+                var whitespaceToRemoveLength = formattingContext.GetIndentationLevelString(minCSharpIndentationLevel - 1).Length;
+                indentationEdits.Add(new TextEdit()
+                {
+                    NewText = string.Empty,
+                    Range = new Range(new Position(i, 0), new Position(i, whitespaceToRemoveLength))
+                });
+            }
+
+            // Apply the edits that remove indentation.
+            changes = indentationEdits.Select(e => e.AsTextChange(changedText));
+            changedText = changedText.WithChanges(changes);
+
+            // Now that we have made all the necessary changes to the document. Let's diff the original vs final version and return the diff.
+            var finalChanges = SourceTextDiffer.GetMinimalTextChanges(originalText, changedText, lineDiffOnly: false);
+            var finalEdits = finalChanges.Select(f => f.AsTextEdit(originalText)).ToArray();
+
+            return Task.FromResult(finalEdits);
+        }
+
+        private TextEdit[] RemapTextEdits(RazorCodeDocument codeDocument, TextEdit[] projectedTextEdits)
+        {
+            var edits = new List<TextEdit>();
+            for (var i = 0; i < projectedTextEdits.Length; i++)
+            {
+                var projectedRange = projectedTextEdits[i].Range;
                 if (codeDocument.IsUnsupported() ||
                     !_documentMappingService.TryMapFromProjectedDocumentRange(codeDocument, projectedRange, out var originalRange))
                 {
@@ -106,13 +168,13 @@ namespace Microsoft.AspNetCore.Razor.LanguageServer.Formatting
                 var edit = new TextEdit()
                 {
                     Range = originalRange,
-                    NewText = formattedEdits[i].NewText
+                    NewText = projectedTextEdits[i].NewText
                 };
 
                 edits.Add(edit);
             }
 
-            return Task.FromResult(edits.ToArray());
+            return edits.ToArray();
         }
 
         private async Task<TextEdit[]> FormatCodeBlockDirectivesAsync(FormattingContext context)
@@ -469,6 +531,23 @@ namespace Microsoft.AspNetCore.Razor.LanguageServer.Formatting
             var precedingWhitespaceLength = precedingLineText.GetTrailingWhitespace().Length;
 
             return TextSpan.FromBounds(start - precedingWhitespaceLength, end);
+        }
+
+        private static TextEdit[] NormalizeTextEdits(SourceText originalText, TextEdit[] edits)
+        {
+            var changes = edits.Select(e => e.AsTextChange(originalText));
+            var changedText = originalText.WithChanges(changes);
+            var cleanChanges = SourceTextDiffer.GetMinimalTextChanges(originalText, changedText, lineDiffOnly: false);
+            var cleanEdits = cleanChanges.Select(c => c.AsTextEdit(originalText)).ToArray();
+            return cleanEdits;
+        }
+
+        private static void TrackEncompassingChange(SourceText oldText, SourceText newText, out TextSpan spanBeforeChange, out TextSpan spanAfterChange)
+        {
+            var affectedRange = newText.GetEncompassingTextChangeRange(oldText);
+
+            spanBeforeChange = affectedRange.Span;
+            spanAfterChange = new TextSpan(spanBeforeChange.Start, affectedRange.NewLength);
         }
     }
 }
